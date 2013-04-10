@@ -136,7 +136,7 @@ Position* find_recursive(Node* node, int j, int i, int offset)
 		find_recursive(edge->node,j,i,i-j);
 	}
 	else
-		return create_position(edge,edge->node,f < edge->last ? f : edge->last,true);//f < edge->last ? f : edge->last
+		return create_position(edge,edge->node,f < edge->last ? f : edge->last,f == edge->last);//f < edge->last ? f : edge->last
 }
 
 Position* find_pos(int j, int i)
@@ -199,16 +199,23 @@ bool is_need_continue(Node *node, int i)
 
 ActionType get_action(Position* pos, int j, int i)
 {
-	if(is_leaf(pos->edge) && pos->edge->last == pos->offset)
-		return CONTINUE;
-	if(!is_leaf(pos->edge) && pos->edge->last == pos->offset && j < i && is_need_continue(pos->node,i))
-		return ADDEDGE;
-	if(pos->offset < pos->edge->last)
+	if(!pos->process)
 	{
-		if((currenttext[pos->offset] == currenttext[i] && j < i) || j == i)
-			return DONOTHING;
-		if(currenttext[pos->offset] != currenttext[i])
-			return SPLIT;
+		if(is_leaf(pos->edge) && pos->edge->last == pos->offset)
+			return CONTINUE;
+		if(!is_leaf(pos->edge) && pos->edge->last == pos->offset && j < i && is_need_continue(pos->node,i))
+			return ADDEDGE;
+		if(pos->offset < pos->edge->last)
+		{
+			if(currenttext[pos->offset] != currenttext[i])
+				return SPLIT;
+			if((currenttext[pos->offset] == currenttext[i] && j < i) || j == i)
+				return DONOTHING;
+		}
+	}
+	else if(!is_leaf(pos->edge) && pos->offset == pos->edge->last && currenttext[pos->offset] != currenttext[i])
+	{
+		return SPLIT;
 	}
 	return DONOTHING;
 }
@@ -216,7 +223,7 @@ ActionType get_action(Position* pos, int j, int i)
 
 int main()
 {
-	currenttext = "Woolloomooloo";//mississippi  //abaabx MISSISSIPPI   ABRACADABRA
+	currenttext = "ASTALAVISTABABY";// abaabx MISSISSIPPI   ABRACADABRA    Woolloomooloo ASTALAVISTABABY THEGREATALBANIANFUTURE  AAAAABCDEAAAAA
 	root = create_root();
 	add_edge(root,0,0);
 	lenstr = currenttext.length();
