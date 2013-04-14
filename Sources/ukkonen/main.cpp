@@ -5,6 +5,7 @@
 #include <limits.h>
 #include <string.h>
 #include <iostream>
+#include <time.h>
 
 using std::string;
 
@@ -300,6 +301,10 @@ int main()
 	root = create_root();
 	firstLong = add_edge(root,0,0);
 	lenstr = currenttext.length();
+
+	clock_t t;
+	t = clock();
+
 	for(int i = 1; i < lenstr;i++)
 	{
 		current = nullptr;
@@ -327,6 +332,10 @@ int main()
 			delete pos;
 		}
 	}
+	clock_t tt = clock();
+	t = tt - t;
+	printf("It took  - %d clicks (%f sec)\n",t,((float)t/CLOCKS_PER_SEC));
+
 	itemcount++;
 	printf("tree:\n");
 	show(root,1);
