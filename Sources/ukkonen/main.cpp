@@ -31,7 +31,8 @@ struct Edge
 
 struct Node
 {
-	Edge* edgies;
+	Edge* ownEdge;
+	Edge* edgies;//children
 	Node* suffixLink;  
 };
 
@@ -45,7 +46,10 @@ struct Position
 
 
 Node *root;
-Node *current;
+Node *current; // last added internal node;
+Position lastPosition; // last position on phase j-1
+Edge* firstLong; // first long edge
+
 string currenttext;
 int lenstr = -1;
 int itemcount = 0;
@@ -78,11 +82,12 @@ Edge* create_edge(Node* parent)
 	return edge;
 }
 
-Node* create_node()
+Node* create_node(Edge* ownedge)
 {
 	auto node = new Node();
 	node->suffixLink = nullptr;
 	node->edgies = nullptr;
+	node->ownEdge = ownedge;
 	return node;
 }
 
@@ -96,7 +101,7 @@ Position* create_position(Edge* edge,Node* node, int offset, bool process)
 	return pos;
 }
 
-void add_edge(Node* node, int index,int last, Node* cont = nullptr)
+Edge* add_edge(Node* node, int index,int last, Node* cont = nullptr)
 {
 	if(!node->edgies)
 	{
@@ -105,6 +110,7 @@ void add_edge(Node* node, int index,int last, Node* cont = nullptr)
 		edge->last = last;
 		node->edgies = edge; // add first children edge to node
 		edge->node = cont;
+		return edge;
 	}
 	else
 	{
@@ -116,6 +122,7 @@ void add_edge(Node* node, int index,int last, Node* cont = nullptr)
 		newedge->first = index;
 		lastEdge->next = newedge;
 		newedge->node = cont;
+		return newedge;
 	}
 }
 
@@ -142,12 +149,40 @@ Position* find_recursive(Node* node, int j, int i, int offset)
 Position* find_pos(int j, int i)
 {
 	int offset = i - j;
-	return find_recursive(root,j,i,offset);
+	Position *p = nullptr;
+	if( j == 0)
+	{
+		p = create_position(firstLong,root,i,true);
+	}
+	else
+	{
+		Position *p = create_position(lastPosition.edge,lastPosition.node,lastPosition.offset,lastPosition.process);
+		int first = p->edge->first;
+		int last = p->edge->last;
+		Node *v = p->edge->parentnode;
+		// find first internal node with links or get root
+		while(v != root && v->suffixLink == nullptr)
+		{
+			first = v->ownEdge->first;
+			v = v->ownEdge->parentnode;
+		}
+		// if node isn't root - we jump according link and walk down,
+		if(v != root)
+		{
+			p = find_recursive(v,first,last,last - first);
+		}
+		else
+		{
+			p = find_recursive(root,j,i,offset);
+		}
+	}
+	lastPosition = *p; 
+	return p;
 }
 
-void split_edge(Edge* edge,int offset,int i)
+Node* split_edge(Edge* edge,int offset,int i)
 {
-	auto newnode = create_node();
+	auto newnode = create_node(edge);
 	auto temp = edge->node;
 	edge->node = newnode;
 	// children edge
@@ -156,6 +191,8 @@ void split_edge(Edge* edge,int offset,int i)
 	edge->last = offset - 1;
 	add_edge(newnode,newfirst,newlast,temp);
 	add_edge(newnode,i,i);
+
+	return newnode;
 }
 
 void show(Node* src, int deep)
@@ -183,6 +220,20 @@ void show(Node* src, int deep)
 		}
 		edge = edge->next;
 	}
+}
+
+void set_current_link(Node* link)
+{
+	if(current != nullptr)
+	{
+		current->suffixLink = link;
+	}
+	current = nullptr;
+}
+
+void node_set_link(Node* node, Node* link)
+{
+	node->suffixLink = link;
 }
 
 bool is_need_continue(Node *node, int i)
@@ -223,9 +274,9 @@ ActionType get_action(Position* pos, int j, int i)
 
 int main()
 {
-	currenttext = "ASTALAVISTABABY";// abaabx MISSISSIPPI   ABRACADABRA    Woolloomooloo ASTALAVISTABABY THEGREATALBANIANFUTURE  AAAAABCDEAAAAA
+	currenttext = "xabxa";// abaabx MISSISSIPPI   ABRACADABRA    Woolloomooloo ASTALAVISTABABY THEGREATALBANIANFUTURE  AAAAABCDEAAAAA
 	root = create_root();
-	add_edge(root,0,0);
+	firstLong = add_edge(root,0,0);
 	lenstr = currenttext.length();
 	for(int i = 1; i < lenstr;i++)
 	{
@@ -241,13 +292,21 @@ int main()
 			else
 			{
 				ActionType act = get_action(pos,j,i);
+				Node* newnode = nullptr;
 				switch(act)
 				{
 					case CONTINUE:
 						pos->edge->last = i;
 						break;
 					case SPLIT:
-						split_edge(pos->edge,pos->offset,i);
+						newnode = split_edge(pos->edge,pos->offset,i);
+						set_current_link(newnode);
+						if(i-j == 1)
+						{
+							node_set_link(newnode,root);
+						}
+						else
+							current = newnode;
 						break;
 					case ADDEDGE:
 						add_edge(pos->node,i,i);
