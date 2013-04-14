@@ -126,6 +126,18 @@ Edge* add_edge(Node* node, int index,int last, Node* cont = nullptr)
 	}
 }
 
+Edge* is_need_add(int j)
+{
+	Edge* edge = root->edgies;
+	while(edge)
+	{
+		if(currenttext[j] == currenttext[edge->first])
+			break;
+		edge = edge->next;
+	}
+	return edge;
+}
+
 Position* find_recursive(Node* node, int j, int i, int offset)
 {
 	auto edge = node->edgies;
@@ -150,13 +162,19 @@ Position* find_pos(int j, int i)
 {
 	int offset = i - j;
 	Position *p = nullptr;
-	if( j == 0)
+	if(j > i)
 	{
-		p = create_position(firstLong,root,i,true);
+		Edge * edge = is_need_add(j); //?????
+		p = create_position(edge,root, edge ? j + 1 : 0,edge == nullptr);
+	}
+	else if( j == 0)
+	{
+		p = is_leaf(firstLong) ? create_position(firstLong,root,i,false) :
+			find_recursive(root,j,i,i - j);
 	}
 	else
 	{
-		Position *p = create_position(lastPosition.edge,lastPosition.node,lastPosition.offset,lastPosition.process);
+		p = create_position(lastPosition.edge,nullptr,lastPosition.offset,lastPosition.process);
 		int first = p->edge->first;
 		int last = p->edge->last;
 		Node *v = p->edge->parentnode;
@@ -169,7 +187,7 @@ Position* find_pos(int j, int i)
 		// if node isn't root - we jump according link and walk down,
 		if(v != root)
 		{
-			p = find_recursive(v,first,last,last - first);
+			p = find_recursive(v->suffixLink,first,last,last - first);
 		}
 		else
 		{
@@ -264,6 +282,10 @@ ActionType get_action(Position* pos, int j, int i)
 				return DONOTHING;
 		}
 	}
+	else if(pos->edge == nullptr && pos->node == root)
+	{
+		return ADDEDGE;
+	}
 	else if(!is_leaf(pos->edge) && pos->offset == pos->edge->last && currenttext[pos->offset] != currenttext[i])
 	{
 		return SPLIT;
@@ -274,44 +296,33 @@ ActionType get_action(Position* pos, int j, int i)
 
 int main()
 {
-	currenttext = "xabxa";// abaabx MISSISSIPPI   ABRACADABRA    Woolloomooloo ASTALAVISTABABY THEGREATALBANIANFUTURE  AAAAABCDEAAAAA
+	currenttext = "MISSISSIPPI";//abaabx  MISSISSIPPI   ABRACADABRA    Woolloomooloo ASTALAVISTABABY THEGREATALBANIANFUTURE  AAAAABCDEAAAAA the quick brown fox jumps over the lazy dog
 	root = create_root();
 	firstLong = add_edge(root,0,0);
 	lenstr = currenttext.length();
 	for(int i = 1; i < lenstr;i++)
 	{
+		current = nullptr;
 		//phase
 		for(int j = 0; j <= i ; j++)
 		{
 			//extension
  			auto pos = find_pos(j,i-1);
-			if(!pos)
+			ActionType act = get_action(pos,j,i);
+			Node* newnode = nullptr;
+			switch(act)
 			{
-				add_edge(root,i,i);
-			}
-			else
-			{
-				ActionType act = get_action(pos,j,i);
-				Node* newnode = nullptr;
-				switch(act)
-				{
-					case CONTINUE:
-						pos->edge->last = i;
-						break;
-					case SPLIT:
-						newnode = split_edge(pos->edge,pos->offset,i);
-						set_current_link(newnode);
-						if(i-j == 1)
-						{
-							node_set_link(newnode,root);
-						}
-						else
-							current = newnode;
-						break;
-					case ADDEDGE:
-						add_edge(pos->node,i,i);
-						break;
-				}
+			case CONTINUE:
+				pos->edge->last = i;
+				break;
+			case SPLIT:
+				newnode = split_edge(pos->edge,pos->offset,i);
+				set_current_link(newnode);
+				current = newnode;
+				break;
+			case ADDEDGE:
+				add_edge(pos->node,i,i);
+				break;
 			}
 			delete pos;
 		}
