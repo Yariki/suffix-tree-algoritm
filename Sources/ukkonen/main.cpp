@@ -216,7 +216,7 @@ ActionType get_action(Position* pos, int j, int i)
 
 int main()
 {
-	currenttext = "MISSISSIPPI";//mississippi  //abaabx MISSISSIPPI   ABRACADABRA  Woolloomooloo  the quick brown fox jumps over the lazy dog
+	currenttext = "I am hosting my ClickOnce deployment with Amazon S3. How can I secure (or restrict) only to my users (network). I was looking to see if I can restrict by IP but Amazon does not provide that with S3";//mississippi  //abaabx MISSISSIPPI   ABRACADABRA  Woolloomooloo  the quick brown fox jumps over the lazy dog
 	root = create_root();
 	add_edge(root,0,0);
 	lenstr = currenttext.length();
