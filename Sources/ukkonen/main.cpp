@@ -5,6 +5,7 @@
 #include <limits.h>
 #include <string.h>
 #include <iostream>
+#include <time.h>
 
 using std::string;
 
@@ -31,7 +32,8 @@ struct Edge
 
 struct Node
 {
-	Edge* edgies;
+	Edge* ownEdge;
+	Edge* edgies;//children
 	Node* suffixLink;  
 };
 
@@ -45,7 +47,10 @@ struct Position
 
 
 Node *root;
-Node *current;
+Node *current; // last added internal node;
+Position lastPosition; // last position on phase j-1
+Edge* firstLong; // first long edge
+
 string currenttext;
 int lenstr = -1;
 int itemcount = 0;
@@ -78,11 +83,12 @@ Edge* create_edge(Node* parent)
 	return edge;
 }
 
-Node* create_node()
+Node* create_node(Edge* ownedge)
 {
 	auto node = new Node();
 	node->suffixLink = nullptr;
 	node->edgies = nullptr;
+	node->ownEdge = ownedge;
 	return node;
 }
 
@@ -96,7 +102,7 @@ Position* create_position(Edge* edge,Node* node, int offset, bool process)
 	return pos;
 }
 
-void add_edge(Node* node, int index,int last, Node* cont = nullptr)
+Edge* add_edge(Node* node, int index,int last, Node* cont = nullptr)
 {
 	if(!node->edgies)
 	{
@@ -105,6 +111,7 @@ void add_edge(Node* node, int index,int last, Node* cont = nullptr)
 		edge->last = last;
 		node->edgies = edge; // add first children edge to node
 		edge->node = cont;
+		return edge;
 	}
 	else
 	{
@@ -116,7 +123,20 @@ void add_edge(Node* node, int index,int last, Node* cont = nullptr)
 		newedge->first = index;
 		lastEdge->next = newedge;
 		newedge->node = cont;
+		return newedge;
 	}
+}
+
+Edge* is_need_add(int j)
+{
+	Edge* edge = root->edgies;
+	while(edge)
+	{
+		if(currenttext[j] == currenttext[edge->first])
+			break;
+		edge = edge->next;
+	}
+	return edge;
 }
 
 Position* find_recursive(Node* node, int j, int i, int offset)
@@ -136,18 +156,52 @@ Position* find_recursive(Node* node, int j, int i, int offset)
 		find_recursive(edge->node,j,i,i-j);
 	}
 	else
-		return create_position(edge,edge->node,f < edge->last ? f : edge->last,true);//f < edge->last ? f : edge->last
+		return create_position(edge,edge->node,f < edge->last ? f : edge->last,f == edge->last);//f < edge->last ? f : edge->last
 }
 
 Position* find_pos(int j, int i)
 {
 	int offset = i - j;
-	return find_recursive(root,j,i,offset);
+	Position *p = nullptr;
+	if(j > i)
+	{
+		Edge * edge = is_need_add(j); //?????
+		p = create_position(edge,root, edge ? j + 1 : 0,edge == nullptr);
+	}
+	else if( j == 0)
+	{
+		p = is_leaf(firstLong) ? create_position(firstLong,root,i,false) :
+			find_recursive(root,j,i,i - j);
+	}
+	else
+	{
+		p = create_position(lastPosition.edge,nullptr,lastPosition.offset,lastPosition.process);
+		int first = p->edge->first;
+		int last = p->edge->last;
+		Node *v = p->edge->parentnode;
+		// find first internal node with links or get root
+		while(v != root && v->suffixLink == nullptr)
+		{
+			first = v->ownEdge->first;
+			v = v->ownEdge->parentnode;
+		}
+		// if node isn't root - we jump according link and walk down,
+		if(v != root)
+		{
+			p = find_recursive(v->suffixLink,first,last,last - first);
+		}
+		else
+		{
+			p = find_recursive(root,j,i,offset);
+		}
+	}
+	lastPosition = *p; 
+	return p;
 }
 
-void split_edge(Edge* edge,int offset,int i)
+Node* split_edge(Edge* edge,int offset,int i)
 {
-	auto newnode = create_node();
+	auto newnode = create_node(edge);
 	auto temp = edge->node;
 	edge->node = newnode;
 	// children edge
@@ -156,6 +210,8 @@ void split_edge(Edge* edge,int offset,int i)
 	edge->last = offset - 1;
 	add_edge(newnode,newfirst,newlast,temp);
 	add_edge(newnode,i,i);
+
+	return newnode;
 }
 
 void show(Node* src, int deep)
@@ -185,6 +241,20 @@ void show(Node* src, int deep)
 	}
 }
 
+void set_current_link(Node* link)
+{
+	if(current != nullptr)
+	{
+		current->suffixLink = link;
+	}
+	current = nullptr;
+}
+
+void node_set_link(Node* node, Node* link)
+{
+	node->suffixLink = link;
+}
+
 bool is_need_continue(Node *node, int i)
 {
 	Edge* edge = node->edgies;
@@ -199,16 +269,27 @@ bool is_need_continue(Node *node, int i)
 
 ActionType get_action(Position* pos, int j, int i)
 {
-	if(is_leaf(pos->edge) && pos->edge->last == pos->offset)
-		return CONTINUE;
-	if(!is_leaf(pos->edge) && pos->edge->last == pos->offset && j < i && is_need_continue(pos->node,i))
-		return ADDEDGE;
-	if(pos->offset < pos->edge->last)
+	if(!pos->process)
 	{
-		if((currenttext[pos->offset] == currenttext[i] && j < i) || j == i)
-			return DONOTHING;
-		if(currenttext[pos->offset] != currenttext[i])
-			return SPLIT;
+		if(is_leaf(pos->edge) && pos->edge->last == pos->offset)
+			return CONTINUE;
+		if(!is_leaf(pos->edge) && pos->edge->last == pos->offset && j < i && is_need_continue(pos->node,i))
+			return ADDEDGE;
+		if(pos->offset < pos->edge->last)
+		{
+			if(currenttext[pos->offset] != currenttext[i])
+				return SPLIT;
+			if((currenttext[pos->offset] == currenttext[i] && j < i) || j == i)
+				return DONOTHING;
+		}
+	}
+	else if(pos->edge == nullptr && pos->node == root)
+	{
+		return ADDEDGE;
+	}
+	else if(!is_leaf(pos->edge) && pos->offset == pos->edge->last && currenttext[pos->offset] != currenttext[i])
+	{
+		return SPLIT;
 	}
 	return DONOTHING;
 }
@@ -216,40 +297,45 @@ ActionType get_action(Position* pos, int j, int i)
 
 int main()
 {
-	currenttext = "I am hosting my ClickOnce deployment with Amazon S3. How can I secure (or restrict) only to my users (network). I was looking to see if I can restrict by IP but Amazon does not provide that with S3";//mississippi  //abaabx MISSISSIPPI   ABRACADABRA  Woolloomooloo  the quick brown fox jumps over the lazy dog
+	currenttext = "MISSISSIPPI";//abaabx  MISSISSIPPI   ABRACADABRA    Woolloomooloo ASTALAVISTABABY THEGREATALBANIANFUTURE  AAAAABCDEAAAAA the quick brown fox jumps over the lazy dog
 	root = create_root();
-	add_edge(root,0,0);
+	firstLong = add_edge(root,0,0);
 	lenstr = currenttext.length();
+
+	clock_t t;
+	t = clock();
+
 	for(int i = 1; i < lenstr;i++)
 	{
+		current = nullptr;
 		//phase
 		for(int j = 0; j <= i ; j++)
 		{
 			//extension
  			auto pos = find_pos(j,i-1);
-			if(!pos)
+			ActionType act = get_action(pos,j,i);
+			Node* newnode = nullptr;
+			switch(act)
 			{
-				add_edge(root,i,i);
-			}
-			else
-			{
-				ActionType act = get_action(pos,j,i);
-				switch(act)
-				{
-					case CONTINUE:
-						pos->edge->last = i;
-						break;
-					case SPLIT:
-						split_edge(pos->edge,pos->offset,i);
-						break;
-					case ADDEDGE:
-						add_edge(pos->node,i,i);
-						break;
-				}
+			case CONTINUE:
+				pos->edge->last = i;
+				break;
+			case SPLIT:
+				newnode = split_edge(pos->edge,pos->offset,i);
+				set_current_link(newnode);
+				current = newnode;
+				break;
+			case ADDEDGE:
+				add_edge(pos->node,i,i);
+				break;
 			}
 			delete pos;
 		}
 	}
+	clock_t tt = clock();
+	t = tt - t;
+	printf("It took  - %d clicks (%f sec)\n",t,((float)t/CLOCKS_PER_SEC));
+
 	itemcount++;
 	printf("tree:\n");
 	show(root,1);
