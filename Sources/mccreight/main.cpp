@@ -39,11 +39,11 @@ struct Label
 	Label(){}
 	Label(int s, int e)
 	{
-		start = s;
-		end = e;
+		pos1 = s;
+		pos2 = e;
 	}
-	int start;
-	int end;
+	int pos1;
+	int pos2;
 };
 
 struct Pos
@@ -96,7 +96,7 @@ Pos* create_pos(void* element, POS_TYPE type,Label& label)
 	Pos* pos = new Pos();
 	pos->element = element;
 	pos->type = type;
-	pos->label = Label(label.start,label.end);
+	pos->label = Label(label.pos1,label.pos2);
 	return pos;
 }
 
@@ -122,9 +122,46 @@ void set_edgenode(Edge* edge, Node* newNode)
 	}
 }
 
+Node* add_element(Pos* pos, int index)
+{
+	switch(pos->type)
+	{
+	case NODE: // just add leaf
+		{
+			auto edge = new Edge();
+			edge->first = index;
+			edge->last = lenght-1;
+			auto node = (Node*)pos->element;
+			edge->parent = node;
+			add_nodechild(node,edge);
+			return (Node*)pos->element;
+		}
+	case EDGE: // split edge with adding new inner node, which will be new head(i);
+		{
+			Edge* edge = (Edge *)pos->element;
+			edge->last = pos->label.pos1 - 1;
+			Node* innerNode = new Node();
+			edge->node = innerNode;
+			innerNode->owner = edge;
+			// two edge for inner node;
+			Edge* splitEdge = new Edge();
+			splitEdge->first = pos->label.pos1;
+			splitEdge->last = lenght - 1;
+			splitEdge->parent = innerNode;
+			add_nodechild(innerNode,splitEdge);
+			Edge* newEdge = new Edge();
+			newEdge->first = pos->label.pos2;
+			newEdge->last = lenght - 1;
+			newEdge->parent = innerNode;
+			add_nodechild(innerNode,newEdge);
+			return innerNode;
+		}
+	}
+}
+
 Pos* slowscan_recurce(Node* node, const Label& label)
 {
-	int startIndex = label.start;
+	int startIndex = label.pos1;
 	vector<Edge*>::iterator iter;
 	Edge* forContinue = nullptr;
 	for(iter = node->children.begin(); iter != node->children.end();++iter)
@@ -132,21 +169,26 @@ Pos* slowscan_recurce(Node* node, const Label& label)
 		forContinue = (Edge*)*iter;
 		if(currenttext[startIndex] == currenttext[forContinue->first])
 			break;
+		forContinue = nullptr;
 	}
-	int f = forContinue->first;
-	bool match = true;
-	while (++startIndex <= forContinue->last)
+	if(forContinue)
 	{
-		if(currenttext[startIndex] != currenttext[++f])
+		int f = forContinue->first;
+		bool match = true;
+		while (++startIndex <= forContinue->last)
 		{
-			match = false;
-			break;
+			if(currenttext[startIndex] != currenttext[++f])
+			{
+				match = false;
+				break;
+			}
 		}
+		if(startIndex <= forContinue->last)
+			return create_pos(forContinue,POS_TYPE::EDGE,Label(f,startIndex));
+		if(startIndex == forContinue->last && forContinue->node != nullptr && match)
+			return slowscan_recurce(forContinue->node,Label(startIndex++,0));
 	}
-	if(startIndex <= forContinue->last)
-		return create_pos(forContinue,POS_TYPE::EDGE,Label(startIndex,0));
-	if(startIndex == forContinue->last && forContinue->node != nullptr && match)
-		return slowscan_recurce(forContinue->node,Label(startIndex++,0));
+	return create_pos(node,POS_TYPE::NODE,Label(0,0));
 }
 
 Pos* slowscan(Node* startNode, const Label& label)
@@ -159,19 +201,19 @@ Pos* slowscan(Node* startNode, const Label& label)
 Pos* fastscan_recurse(Node* node, const Label& label)
 {
 	Edge* forCont = nullptr;
-	int  startIndex = label.start;
+	int  startIndex = label.pos1;
 	for(int i = 0; i < node->children.size();i++)
 	{
 		forCont = node->children[i];
 		if(currenttext[startIndex] == currenttext[forCont->first])
 			break;
 	}
-	if(label.end < forCont->last)
-		return create_pos(forCont,POS_TYPE::EDGE,Label(label.end,0));
-	if(label.end == forCont->last)
+	if(label.pos2 < forCont->last)
+		return create_pos(forCont,POS_TYPE::EDGE,Label(label.pos2,0));
+	if(label.pos2 == forCont->last)
 		return  create_pos(forCont->node,POS_TYPE::NODE,Label(0,0));
-	if(label.end > forCont->last)
-		return fastscan_recurse(forCont->node,Label(forCont->last + 1,label.end));
+	if(label.pos2 > forCont->last)
+		return fastscan_recurse(forCont->node,Label(forCont->last + 1,label.pos2));
 }
 
 Pos* fastscan(Node* node, const Label& label)
@@ -198,8 +240,9 @@ int main()
 	{
 		if(head == root)
 		{
-			Pos* pos = slowscan(root,Label(tail+1,lenght-1));
-
+			Pos* pos = slowscan(root,Label(i+1,lenght-1));
+			auto newnode = add_element(pos,i+1);
+			head = newnode;
 			continue;
 		}
 		Node* u = get_parent(head);
@@ -209,16 +252,21 @@ int main()
 			w = fastscan(get_suffix(u),v);
 		else
 			w = fastscan(root,v);
+		Node* newNode = nullptr;
 		switch(w->type)
 		{
-		case POS_TYPE::EDGE:
-			//
+		case EDGE:
+			newNode = add_element(w,i+1);
+			set_suffix(head,newNode);
+			head = newNode;
 			break;
-		case  POS_TYPE::NODE:
-			//
+		case NODE:
+			Pos* p = slowscan((Node*)w->element,Label(i+1,lenght-1));
+			newNode = add_element(p,i+1);
+			set_suffix(head,newNode);
+			head = newNode;
 			break;
 		}
 	}
-
 	system("pause");
 }
