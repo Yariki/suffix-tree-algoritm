@@ -36,6 +36,7 @@ struct Node
 
 struct Label
 {
+	Label(){}
 	Label(int s, int e)
 	{
 		start = s;
@@ -47,6 +48,7 @@ struct Label
 
 struct Pos
 {
+	Pos(){}
 	void* element;
 	POS_TYPE type;
 	Label label;
@@ -54,15 +56,23 @@ struct Pos
 
 
 
-
 Node* root;
 Node* head;
+int tail;
 string currenttext;
 int lenght = -1;
 
 void create_init_tree()
 {
-
+	root = new Node();
+	root->suffix = root;
+	root->owner = nullptr;
+	Edge* edge = new Edge();
+	edge->parent = root;
+	edge->first = 0;
+	edge->last = currenttext.length() - 1;
+	edge->node = nullptr;
+	root->children.push_back(edge);
 }
 
 Node* get_parent(Node* node)
@@ -81,6 +91,14 @@ Node* get_suffix(Node* node)
 	return node->suffix;
 }
 
+Pos* create_pos(void* element, POS_TYPE type,Label& label)
+{
+	Pos* pos = new Pos();
+	pos->element = element;
+	pos->type = type;
+	pos->label = Label(label.start,label.end);
+	return pos;
+}
 
 void set_suffix(Node* head, Node* suf)
 {
@@ -88,15 +106,80 @@ void set_suffix(Node* head, Node* suf)
 		head->suffix = suf;
 }
 
+void add_nodechild(Node* parent, Edge* edge)
+{
+	if(parent != nullptr && edge != nullptr)
+	{
+		parent->children.push_back(edge);
+	}
+}
+
+void set_edgenode(Edge* edge, Node* newNode)
+{
+	if(edge != nullptr && newNode != nullptr)
+	{
+		edge->node = newNode;
+	}
+}
+
+Pos* slowscan_recurce(Node* node, const Label& label)
+{
+	int startIndex = label.start;
+	vector<Edge*>::iterator iter;
+	Edge* forContinue = nullptr;
+	for(iter = node->children.begin(); iter != node->children.end();++iter)
+	{
+		forContinue = (Edge*)*iter;
+		if(currenttext[startIndex] == currenttext[forContinue->first])
+			break;
+	}
+	int f = forContinue->first;
+	bool match = true;
+	while (++startIndex <= forContinue->last)
+	{
+		if(currenttext[startIndex] != currenttext[++f])
+		{
+			match = false;
+			break;
+		}
+	}
+	if(startIndex <= forContinue->last)
+		return create_pos(forContinue,POS_TYPE::EDGE,Label(startIndex,0));
+	if(startIndex == forContinue->last && forContinue->node != nullptr && match)
+		return slowscan_recurce(forContinue->node,Label(startIndex++,0));
+}
+
 Pos* slowscan(Node* startNode, const Label& label)
 {
+	Pos* pos = slowscan_recurce(startNode,label);
 	return nullptr;
 }
 
-Pos* fastscan(Node* endNode, const Label& label)
+
+Pos* fastscan_recurse(Node* node, const Label& label)
 {
-	return nullptr;
+	Edge* forCont = nullptr;
+	int  startIndex = label.start;
+	for(int i = 0; i < node->children.size();i++)
+	{
+		forCont = node->children[i];
+		if(currenttext[startIndex] == currenttext[forCont->first])
+			break;
+	}
+	if(label.end < forCont->last)
+		return create_pos(forCont,POS_TYPE::EDGE,Label(label.end,0));
+	if(label.end == forCont->last)
+		return  create_pos(forCont->node,POS_TYPE::NODE,Label(0,0));
+	if(label.end > forCont->last)
+		return fastscan_recurse(forCont->node,Label(forCont->last + 1,label.end));
 }
+
+Pos* fastscan(Node* node, const Label& label)
+{
+	Pos* pos = fastscan_recurse(node,label);
+	return pos;
+}
+
 
 int main()
 {
@@ -110,12 +193,12 @@ int main()
 	}
 	create_init_tree();
 	head = root;
-
+	tail = 0;
 	for(int i = 0; i < lenght;i++)
 	{
 		if(head == root)
 		{
-			Pos* pos = slowscan(root,Label(i+1,lenght-1));
+			Pos* pos = slowscan(root,Label(tail+1,lenght-1));
 
 			continue;
 		}
