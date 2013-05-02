@@ -62,6 +62,11 @@ int tail;
 string currenttext;
 int lenght = -1;
 
+int itemcount = 0;
+char* format = "(%d:%s)";
+char* formatN = "(%d:%s):leaf\n\n";
+
+
 void create_init_tree()
 {
 	root = new Node();
@@ -78,6 +83,11 @@ void create_init_tree()
 Node* get_parent(Node* node)
 {
 	return node->owner->parent;
+}
+
+bool is_leaf(Edge* edge)
+{
+	return edge->node == nullptr;
 }
 
 Label get_label(Node*parent,Node* node)
@@ -175,7 +185,7 @@ Pos* slowscan_recurce(Node* node, const Label& label)
 	{
 		int f = forContinue->first;
 		bool match = true;
-		while (++startIndex <= forContinue->last)
+		while (++startIndex <= forContinue->last && startIndex < lenght)
 		{
 			if(currenttext[startIndex] != currenttext[++f])
 			{
@@ -194,7 +204,7 @@ Pos* slowscan_recurce(Node* node, const Label& label)
 Pos* slowscan(Node* startNode, const Label& label)
 {
 	Pos* pos = slowscan_recurce(startNode,label);
-	return nullptr;
+	return pos;
 }
 
 
@@ -222,6 +232,32 @@ Pos* fastscan(Node* node, const Label& label)
 	return pos;
 }
 
+void show(Node* src, int deep)
+{
+	if(!src)
+		return;
+
+	vector<Edge*>::iterator iter;
+	for(iter = src->children.begin(); iter != src->children.end();++iter)
+	{
+		Edge* edge = (Edge*)*iter;
+		if(is_leaf(edge))
+		{
+			for(int i = 0; i < deep	;i++ )printf("\t");
+			int f = edge->first ? edge->first : 1;
+			printf(formatN,itemcount,currenttext.substr(edge->first,edge->last - edge->first + 1).c_str());
+			itemcount++;
+		}
+		else if(!is_leaf(edge))
+		{
+			for(int i = 0; i < deep;i++ )printf("\t");
+			int f = edge->first ? edge->first : 1;
+			printf(format,itemcount,currenttext.substr(edge->first,edge->last - edge->first + 1).c_str());
+			itemcount++;
+			show(edge->node,deep + 1);
+		}
+	}
+}
 
 int main()
 {
@@ -261,12 +297,14 @@ int main()
 			head = newNode;
 			break;
 		case NODE:
-			Pos* p = slowscan((Node*)w->element,Label(i+1,lenght-1));
+			Pos* p = slowscan((Node*)w->element,Label( i == lenght - 1 ? lenght - 1 : i+1,lenght-1));
 			newNode = add_element(p,i+1);
 			set_suffix(head,newNode);
 			head = newNode;
 			break;
 		}
 	}
+	itemcount++;
+	show(root,1);
 	system("pause");
 }
