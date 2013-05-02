@@ -159,6 +159,8 @@ Node* add_element(Pos* pos, int index)
 	case EDGE: // split edge with adding new inner node, which will be new head(i);
 		{
 			Edge* edge = (Edge *)pos->element;
+			Node* node = edge->node;
+			int last = edge->last;
 			edge->last = pos->label.pos1 - 1;
 			Node* innerNode = new Node();
 			edge->node = innerNode;
@@ -166,8 +168,9 @@ Node* add_element(Pos* pos, int index)
 			// two edge for inner node;
 			Edge* splitEdge = new Edge();
 			splitEdge->first = pos->label.pos1;
-			splitEdge->last = lenght - 1;
+			splitEdge->last = node ? last : lenght - 1;
 			splitEdge->parent = innerNode;
+			splitEdge->node = node;
 			add_nodechild(innerNode,splitEdge);
 			Edge* newEdge = new Edge();
 			newEdge->first = pos->label.pos2;
@@ -215,18 +218,20 @@ Pos* slowscan_recurce(Node* node, Label& label)
 	if(forContinue)
 	{
 		int f = forContinue->first+1;
+		bool match = true;
 		while (f <= forContinue->last && startIndex < lenght)
 		{
 			if(currenttext[++startIndex] != currenttext[f++])
 			{
+				match = false;
 				break;
 			}
 		}
 		
-		if(f < forContinue->last)
+		if(f < forContinue->last ||(!match && f - 1 == forContinue->last))
 			return create_pos(forContinue,EDGE,Label(f-1,startIndex));
 		label.pos1 = ++startIndex;
-		if(f >= forContinue->last && forContinue->node != nullptr)
+		if(f >= forContinue->last && forContinue->node != nullptr && match)
 			return slowscan_recurce(forContinue->node,label);//create_pos(forContinue->node,POS_TYPE::NODE,Label(startIndex++,0));
 	}
 	return create_pos(node,NODE,Label(0,0));
@@ -292,7 +297,7 @@ void show(Node* src, int deep)
 
 int main()
 {
-	currenttext = "abaabx"; // baxab  abaab  abaabx   AAAXA
+	currenttext = "AAAXA"; // baxab  abaab  abaabx   AAAXA
 	currenttext += "$";
 	lenght = currenttext.length();
 	if(lenght == -1)
