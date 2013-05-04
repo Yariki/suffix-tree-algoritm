@@ -6,8 +6,10 @@
 #include <string.h>
 #include <iostream>
 #include <time.h>
+#include <vector>
 
 using std::string;
+using std::vector;
 
 
 enum ActionType
@@ -241,6 +243,36 @@ void show(Node* src, int deep)
 	}
 }
 
+void delete_tree(Node* node)
+{
+	if(!node)
+		return;
+	Edge* edge = node->edgies;
+	vector<Edge*> vec;
+	while(edge)
+	{
+		vec.push_back(edge);
+		edge =  edge->next;
+	}
+	edge =  nullptr;
+
+	for(int i = 0; i < vec.size();i++)
+	{
+		edge = vec[i];
+		if(is_leaf(edge))
+		{
+			delete edge;
+			edge = nullptr;
+		}
+		else
+		{
+			delete_tree(edge->node);
+		}
+	}
+	delete node;
+	node = nullptr;
+}
+
 void set_current_link(Node* link)
 {
 	if(current != nullptr)
@@ -339,5 +371,6 @@ int main()
 	itemcount++;
 	printf("tree:\n");
 	show(root,1);
+	delete_tree(root);
 	system("pause");
 }

@@ -37,6 +37,7 @@ struct Node
 	Edge* owner;
 	vector<Edge*> children;
 	Node* suffix;
+	int depth;
 };
 
 struct Label
@@ -87,6 +88,7 @@ void create_init_tree()
 	edge->first = 0;
 	edge->last = currenttext.length() - 1;
 	edge->node = nullptr;
+	root->depth = 0;
 	root->children.push_back(edge);
 }
 
@@ -142,6 +144,13 @@ void set_edgenode(Edge* edge, Node* newNode)
 	}
 }
 
+Label get_label_suffix(Label& label)
+{
+	label.pos1 = label.getLenght() == 1 ? label.pos1 // for returning node which we need 
+		: label.pos1 + 1; // drop first symbol 
+	return label;
+}
+
 Node* add_element(Pos* pos, int index)
 {
 	switch(pos->type)
@@ -149,7 +158,7 @@ Node* add_element(Pos* pos, int index)
 	case NODE: // just add leaf
 		{
 			auto edge = new Edge();
-			edge->first = index;
+			edge->first = pos->label.pos2;//index;
 			edge->last = lenght-1;
 			auto node = (Node*)pos->element;
 			edge->parent = node;
@@ -165,12 +174,18 @@ Node* add_element(Pos* pos, int index)
 			Node* innerNode = new Node();
 			edge->node = innerNode;
 			innerNode->owner = edge;
+			innerNode->depth = edge->parent->depth + edge->getLenght();
 			// two edge for inner node;
 			Edge* splitEdge = new Edge();
 			splitEdge->first = pos->label.pos1;
 			splitEdge->last = node ? last : lenght - 1;
 			splitEdge->parent = innerNode;
 			splitEdge->node = node;
+			if(node)
+			{
+				node->owner = splitEdge;
+				node->depth = innerNode->depth + splitEdge->getLenght();
+			}
 			add_nodechild(innerNode,splitEdge);
 			Edge* newEdge = new Edge();
 			newEdge->first = pos->label.pos2;
@@ -185,18 +200,28 @@ Node* add_element(Pos* pos, int index)
 Node* add_element_edge_fast(Pos* pos, int tail)
 {
 	Edge* edge = (Edge*)pos->element;
+	Node* node = edge->node;
+	int last = edge->last;
 	edge->last = pos->label.pos1;
 	Node* innerNode = new Node();
 	edge->node = innerNode;
 	innerNode->owner = edge;
+	innerNode->depth = edge->parent->depth + edge->getLenght();
 	// two edges for node
 	Edge* split = new Edge();
-	split->first = pos->label.pos1+1;
-	split->last = lenght - 1;
+	split->first = edge->last + 1; //node ? last : pos->label.pos1+1;
+	split->last = node ? last : lenght - 1; // ??
 	split->parent = innerNode;
+	split->node = node;
+	if(node)
+	{
+		node->owner = split;
+		node->depth = innerNode->depth + split->getLenght();
+	}
 	add_nodechild(innerNode,split);
 	Edge* newEdge = new Edge();
-	newEdge->first = tail + pos->label.pos2;
+	int first = (tail + pos->label.pos2) >= lenght ? lenght - 1 : tail + pos->label.pos2;
+	newEdge->first = first;
 	newEdge->last = lenght - 1;
 	newEdge->parent = innerNode;
 	add_nodechild(innerNode,newEdge);
@@ -227,14 +252,13 @@ Pos* slowscan_recurce(Node* node, Label& label)
 				break;
 			}
 		}
-		
 		if(f < forContinue->last ||(!match && f - 1 == forContinue->last))
 			return create_pos(forContinue,EDGE,Label(f-1,startIndex));
 		label.pos1 = ++startIndex;
 		if(f >= forContinue->last && forContinue->node != nullptr && match)
 			return slowscan_recurce(forContinue->node,label);//create_pos(forContinue->node,POS_TYPE::NODE,Label(startIndex++,0));
 	}
-	return create_pos(node,NODE,Label(0,0));
+	return create_pos(node,NODE,Label(0,startIndex >= lenght ? lenght - 1 : startIndex));
 }
 
 Pos* slowscan(Node* startNode, Label& label)
@@ -244,7 +268,7 @@ Pos* slowscan(Node* startNode, Label& label)
 }
 
 
-Pos* fastscan_recurse(Node* node, Label& label)
+Pos* fastscan_recurse(Node* node, Label& label,int depth)
 {
 	Edge* forCont = nullptr;
 	int  startIndex = label.pos1;
@@ -255,16 +279,22 @@ Pos* fastscan_recurse(Node* node, Label& label)
 			break;
 	}
 	if(label.getLenght() < forCont->getLenght())
-		return create_pos(forCont,EDGE,Label(label.pos2,label.pos2));
+	{
+		int start = label.getLenght() != 1 ? forCont->first + label.getLenght() - 1 : forCont->first;
+		int d = depth + label.getLenght() ;
+		return create_pos(forCont,EDGE,Label(start,d));
+	}
 	if(label.getLenght() == forCont->getLenght())
-		return  create_pos(forCont->parent,NODE,Label(0,0));
+		return  create_pos(forCont->parent,NODE,Label(0,0)); 
+	int start = forCont->getLenght() != 1 ? startIndex + forCont->getLenght() - 1  : startIndex + 1;
+	int d = depth + forCont->getLenght() ;
 	if(label.getLenght() > forCont->getLenght())
-		return fastscan_recurse(forCont->node,Label(forCont->last + 1,label.pos2));
+		return fastscan_recurse(forCont->node,Label(start,label.pos2),d);
 }
 
 Pos* fastscan(Node* node, Label& label)
 {
-	Pos* pos = fastscan_recurse(node,label);
+	Pos* pos = fastscan_recurse(node,label,node->depth);
 	return pos;
 }
 
@@ -295,9 +325,33 @@ void show(Node* src, int deep)
 	}
 }
 
+void delete_tree(Node* node)
+{
+	if(!node)
+		return;
+	
+	for(int i = 0; i < node->children.size();i++)
+	{
+		Edge* edge = node->children[i];
+		if(is_leaf(edge))
+		{
+			delete edge;
+			edge = nullptr;
+		}
+		else
+		{
+			delete_tree(edge->node);
+		}
+	}
+	delete node;
+	node = nullptr;
+
+}
+
+
 int main()
 {
-	currenttext = "AAAXA"; // baxab  abaab  abaabx   AAAXA
+	currenttext = "ABRACADABRA"; // baxab  abaab  abaabx   AAAXA  aaxaax   MISSISSIPPI  ABRACADABRA  AAAXAAAXA   AAAXAAAXAAAX
 	currenttext += "$";
 	lenght = currenttext.length();
 	if(lenght == -1)
@@ -313,7 +367,7 @@ int main()
 
 		if(head == root)
 		{
-			Pos* pos = slowscan(root,Label(i == lenght - 1 ? lenght - 1 : i+1,lenght-1));
+			Pos* pos = slowscan(root,Label( i+1,lenght-1));
 			auto newnode = add_element(pos,i+1);
 			head = newnode;
 			continue;
@@ -321,11 +375,11 @@ int main()
 		Node* u = get_parent(head);
 		Label v = get_label(u,head);
 		Pos* w = nullptr;
-		if(u == root)
+		if(u != root)
 			w = fastscan(get_suffix(u),v);
 		else
 		{
-			w = fastscan(root,v);
+			w = fastscan(root,get_label_suffix(v));
 		}
 		Node* newNode = nullptr;
 		switch(w->type)
@@ -336,7 +390,7 @@ int main()
 			head = newNode;
 			break;
 		case NODE:
-			Pos* p = slowscan((Node*)w->element,Label( i == lenght - 1 ? lenght - 1 : i+1,lenght-1));
+			Pos* p = slowscan((Node*)w->element,Label(i+1,lenght-1));
 			newNode = add_element(p,i+1);
 			set_suffix(head,(Node*)w->element);
 			head = newNode;
@@ -345,5 +399,6 @@ int main()
 	}
 	itemcount++;
 	show(root,1);
+	delete_tree(root);
 	system("pause");
 }
