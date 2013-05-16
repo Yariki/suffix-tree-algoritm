@@ -74,8 +74,8 @@ string currenttext;
 int lenght = -1;
 
 int itemcount = 0;
-char* format = "(%d:%s)";
-char* formatN = "(%d:%s):leaf\n\n";
+char* format = "(%d:%s)\n";
+char* formatN = "(%d:%s):leaf\n";
 
 
 void create_init_tree()
@@ -298,7 +298,7 @@ Pos* fastscan(Node* node, Label& label)
 	return pos;
 }
 
-void show(Node* src, int deep)
+void show(Node* src, int deep,string str)
 {
 	if(!src)
 		return;
@@ -309,20 +309,47 @@ void show(Node* src, int deep)
 		Edge* edge = (Edge*)*iter;
 		if(is_leaf(edge))
 		{
-			for(int i = 0; i < deep	;i++ )printf("\t");
+			string temp = str;
+			if(deep > 1)
+			{
+				for(int i = 0; i < 2;i++)temp += " ";
+				printf("%s|\n",temp.c_str());
+				printf("%s|->",temp.c_str());
+			}
+			else
+			{
+				printf("%s-->",temp.c_str());
+			}
+			
 			int f = edge->first ? edge->first : 1;
-			printf(formatN,itemcount,currenttext.substr(edge->first,edge->last - edge->first + 1).c_str());
+			printf(formatN,deep,currenttext.substr(edge->first,edge->last - edge->first + 1).c_str());
 			itemcount++;
 		}
 		else if(!is_leaf(edge))
 		{
-			for(int i = 0; i < deep;i++ )printf("\t");
+			string temp = str;
+			string temp1 = str;
+			for(int i = 0; i < 2;i++ )
+			{
+					temp += "-";
+					temp1 += " ";
+			}
+			printf("%s>",temp.c_str());
 			int f = edge->first ? edge->first : 1;
-			printf(format,itemcount,currenttext.substr(edge->first,edge->last - edge->first + 1).c_str());
+			printf(format,deep,currenttext.substr(edge->first,edge->last - edge->first + 1).c_str());
 			itemcount++;
-			show(edge->node,deep + 1);
+			temp1 += "|";
+			show(edge->node,deep + 1,temp1);
 		}
 	}
+}
+
+void show_tree()
+{
+	printf("Root\n");
+	string str = "|";
+	printf("|\n");
+	show(root,1,str);
 }
 
 void delete_tree(Node* node)
@@ -348,10 +375,23 @@ void delete_tree(Node* node)
 
 }
 
+void show_info()
+{
+	printf("Rozrahunkovo-graphichna robota na temy 'Algoritmu pobydovu syffiksnuh derev'\n");
+	printf("Algoritm - McCreight\n");
+	printf("Stydentku grypu IS-11 - Simon Anastasii\n");
+	printf("\n");
+}
+
 
 int main()
 {
-	currenttext = "ABRACADABRA"; // baxab  abaab  abaabx   AAAXA  aaxaax   MISSISSIPPI  ABRACADABRA  AAAXAAAXA   AAAXAAAXAAAX
+	show_info();
+	char* row = new char[255];
+	printf("Vvedit ryadok (pruklad -> 'ABRACADABRA'):");
+	std::cin >> row;
+	currenttext = string(row);
+	//currenttext = "MISSISSIPPI"; // baxab  abaab  abaabx   AAAXA  aaxaax   MISSISSIPPI  ABRACADABRA  AAAXAAAXA   AAAXAAAXAAAX
 	currenttext += "$";
 	lenght = currenttext.length();
 	if(lenght == -1)
@@ -398,7 +438,8 @@ int main()
 		}
 	}
 	itemcount++;
-	show(root,1);
+	show_tree();
 	delete_tree(root);
+	delete row;
 	system("pause");
 }

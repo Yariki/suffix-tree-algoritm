@@ -56,8 +56,8 @@ Edge* firstLong; // first long edge
 string currenttext;
 int lenstr = -1;
 int itemcount = 0;
-char* format = "(%d:%s)";
-char* formatN = "(%d:%s):leaf\n\n";
+char* format = "(%d:%s)\n";
+char* formatN = "(%d:%s):leaf\n";
 
 
 bool  is_leaf(Edge* edge)
@@ -216,7 +216,7 @@ Node* split_edge(Edge* edge,int offset,int i)
 	return newnode;
 }
 
-void show(Node* src, int deep)
+void show(Node* src, int deep, string str)
 {
 	if(!src)
 		return;
@@ -226,21 +226,47 @@ void show(Node* src, int deep)
 		
 		if(is_leaf(edge))
 		{
-			for(int i = 0; i < deep	;i++ )printf("\t");
+			string temp = str;
+			if(deep > 1)
+			{
+				for(int i = 0; i < 2;i++)temp += " ";
+				printf("%s|\n",temp.c_str());
+				printf("%s|->",temp.c_str());
+			}
+			else
+			{
+				printf("%s-->",temp.c_str());
+			}
 			int f = edge->first ? edge->first : 1;
-			printf(formatN,itemcount,currenttext.substr(edge->first,edge->last - edge->first + 1).c_str());
+			printf(formatN,deep,currenttext.substr(edge->first,edge->last - edge->first + 1).c_str());
 			itemcount++;
 		}
 		else if(!is_leaf(edge))
 		{
-			for(int i = 0; i < deep;i++ )printf("\t");
+			string temp = str;
+			string temp1 = str;
+			for(int i = 0; i < 2;i++ )
+			{
+				temp += "-";
+				temp1 += " ";
+			}
+			printf("%s>",temp.c_str());
 			int f = edge->first ? edge->first : 1;
-			printf(format,itemcount,currenttext.substr(edge->first,edge->last - edge->first + 1).c_str());
+			printf(format,deep,currenttext.substr(edge->first,edge->last - edge->first + 1).c_str());
 			itemcount++;
-			show(edge->node,deep + 1);
+			temp1 += "|";
+			show(edge->node,deep + 1,temp1);
 		}
 		edge = edge->next;
 	}
+}
+
+void show_tree()
+{
+	printf("Root\n");
+	string str = "|";
+	printf("|\n");
+	show(root,1,str);
 }
 
 void delete_tree(Node* node)
@@ -326,10 +352,23 @@ ActionType get_action(Position* pos, int j, int i)
 	return DONOTHING;
 }
 
+void show_info()
+{
+	printf("Rozrahunkovo-graphichna robota na temy 'Algoritmu pobydovu syffiksnuh derev'\n");
+	printf("Algoritm - Ukkonena\n");
+	printf("Stydentku grypu IS-11 - Simon Anastasii\n");
+	printf("\n");
+}
+
 
 int main()
 {
-	currenttext = "MISSISSIPPI";//abaabx  MISSISSIPPI   ABRACADABRA    Woolloomooloo ASTALAVISTABABY THEGREATALBANIANFUTURE  AAAAABCDEAAAAA the quick brown fox jumps over the lazy dog
+	show_info();
+	char* row = new char[255];
+	printf("Vvedit ryadok (pruklad -> 'ABRACADABRA'):");
+	std::cin >> row;
+	currenttext = string(row);
+	//currenttext = "MISSISSIPPI";//abaabx  MISSISSIPPI   ABRACADABRA    Woolloomooloo ASTALAVISTABABY THEGREATALBANIANFUTURE  AAAAABCDEAAAAA the quick brown fox jumps over the lazy dog
 	root = create_root();
 	firstLong = add_edge(root,0,0);
 	lenstr = currenttext.length();
@@ -366,11 +405,12 @@ int main()
 	}
 	clock_t tt = clock();
 	t = tt - t;
-	printf("It took  - %d clicks (%f sec)\n",t,((float)t/CLOCKS_PER_SEC));
+	//printf("It took  - %d clicks (%f sec)\n",t,((float)t/CLOCKS_PER_SEC));
 
 	itemcount++;
-	printf("tree:\n");
-	show(root,1);
+	//printf("tree:\n");
+	show_tree();
 	delete_tree(root);
+	delete row;
 	system("pause");
 }
