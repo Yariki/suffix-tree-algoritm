@@ -5,8 +5,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ukkonen", "Sources\ukkonen\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mccreight", "Sources\mccreight\mccreight.vcxproj", "{B76CD558-8A6A-42C2-93B7-C2114A8D5D27}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "farach", "Sources\farach\farach.vcxproj", "{18640AE2-DFC6-4C21-B6A6-652EE71AE10D}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -21,10 +19,6 @@ Global
 		{B76CD558-8A6A-42C2-93B7-C2114A8D5D27}.Debug|Win32.Build.0 = Debug|Win32
 		{B76CD558-8A6A-42C2-93B7-C2114A8D5D27}.Release|Win32.ActiveCfg = Release|Win32
 		{B76CD558-8A6A-42C2-93B7-C2114A8D5D27}.Release|Win32.Build.0 = Release|Win32
-		{18640AE2-DFC6-4C21-B6A6-652EE71AE10D}.Debug|Win32.ActiveCfg = Debug|Win32
-		{18640AE2-DFC6-4C21-B6A6-652EE71AE10D}.Debug|Win32.Build.0 = Debug|Win32
-		{18640AE2-DFC6-4C21-B6A6-652EE71AE10D}.Release|Win32.ActiveCfg = Release|Win32
-		{18640AE2-DFC6-4C21-B6A6-652EE71AE10D}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
