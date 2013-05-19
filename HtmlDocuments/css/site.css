@@ -2,7 +2,7 @@ body {
     background-color: #fff;
 }
 .metrouicss .page {
-    width: 940px ;
+    width: 1000px ;
     margin: auto;
     background-color: #fff;
 }
@@ -167,4 +167,12 @@ hr {
     .metrouicss #brand-name {
         display: none;
     }
+}
+
+.metrouicss .page.secondary .page-region .page-region-content {
+  padding-left: 5px;
+}
+
+.metrouicss .image-container {
+    width: 650px;
 }
