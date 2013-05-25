@@ -5,6 +5,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ukkonen", "Sources\ukkonen\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mccreight", "Sources\mccreight\mccreight.vcxproj", "{B76CD558-8A6A-42C2-93B7-C2114A8D5D27}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "1393_AverageCommonPrefix", "Sources\1393_AverageCommonPrefix\1393_AverageCommonPrefix.vcxproj", "{57B0371F-F787-42E1-AAC7-5AD59861ED14}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -19,6 +21,10 @@ Global
 		{B76CD558-8A6A-42C2-93B7-C2114A8D5D27}.Debug|Win32.Build.0 = Debug|Win32
 		{B76CD558-8A6A-42C2-93B7-C2114A8D5D27}.Release|Win32.ActiveCfg = Release|Win32
 		{B76CD558-8A6A-42C2-93B7-C2114A8D5D27}.Release|Win32.Build.0 = Release|Win32
+		{57B0371F-F787-42E1-AAC7-5AD59861ED14}.Debug|Win32.ActiveCfg = Debug|Win32
+		{57B0371F-F787-42E1-AAC7-5AD59861ED14}.Debug|Win32.Build.0 = Debug|Win32
+		{57B0371F-F787-42E1-AAC7-5AD59861ED14}.Release|Win32.ActiveCfg = Release|Win32
+		{57B0371F-F787-42E1-AAC7-5AD59861ED14}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
