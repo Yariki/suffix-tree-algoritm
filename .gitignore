@@ -10,3 +10,5 @@
 /Sources/mccreight/*.user
 /ipch
 /Release
+/Sources/postcards/Debug
+/Sources/triangle/Debug

@@ -96,6 +96,7 @@ bool can_include(const postcard* post, const envelope* env)
 	float he = env->_h;
 	float we = env->_w;
 	float temp,d,l,alpha,beta, gamma,width;
+	// попытка разместить паралельно сторонам
 	if(he > we)
 	{
 		temp = he;
