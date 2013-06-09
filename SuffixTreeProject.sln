@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "1393_AverageCommonPrefix", 
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "postcards", "Sources\postcards\postcards.vcxproj", "{B19A4E1B-B39C-4C40-95B7-7D491CDF5488}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "triangle", "Sources\triangle\triangle.vcxproj", "{673FDFB2-5E3A-40D1-AE8A-AD6FCFACCF95}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -31,6 +33,10 @@ Global
 		{B19A4E1B-B39C-4C40-95B7-7D491CDF5488}.Debug|Win32.Build.0 = Debug|Win32
 		{B19A4E1B-B39C-4C40-95B7-7D491CDF5488}.Release|Win32.ActiveCfg = Release|Win32
 		{B19A4E1B-B39C-4C40-95B7-7D491CDF5488}.Release|Win32.Build.0 = Release|Win32
+		{673FDFB2-5E3A-40D1-AE8A-AD6FCFACCF95}.Debug|Win32.ActiveCfg = Debug|Win32
+		{673FDFB2-5E3A-40D1-AE8A-AD6FCFACCF95}.Debug|Win32.Build.0 = Debug|Win32
+		{673FDFB2-5E3A-40D1-AE8A-AD6FCFACCF95}.Release|Win32.ActiveCfg = Release|Win32
+		{673FDFB2-5E3A-40D1-AE8A-AD6FCFACCF95}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
