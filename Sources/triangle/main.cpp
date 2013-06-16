@@ -222,7 +222,11 @@ void main()
 		coord.y2 = coord.y2 - coord.y3;
 		coord.x3 = coord.y3 = 0;
 		find_min_lenght(coord);
+		ofstream out;
+		out.open("triangle.out");
 		cout << "Min lenght = " << coord.min << "\n";
+		out << "Min lenght = " << coord.min << "\n";
+		out.close();
 	}
 	
 	system("pause");

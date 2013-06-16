@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <time.h>
 #include <vector>
+#include <sstream>
 
 using namespace std;
 using std::string;
@@ -143,6 +144,7 @@ void main()
 		system("pause");
 	}
 
+	int maxPostcards = 0;
 	for(int i = 0; i< vectpost.size();i++)
 	{
 		
@@ -155,27 +157,32 @@ void main()
 			if(can_include(pos,env)){
 				pos->_indexEnvelope = j;
 				env->_indexPostcard = i;
+				maxPostcards++;
 				break;
 			}
 		}
 	}
-	int maxPostcards = 0;
+	
 	for(auto iter = vecenv.begin(); iter != vecenv.end(); iter++)
 	{
 		delete *iter;
 	}
-	
+	ofstream outStream;
+	outStream.open("postcards.out");
+
+	cout << "Max count: " << maxPostcards << "\n";
+	outStream << "Max count: " << maxPostcards << "\n";
 	for(int i = 0; i <  vectpost.size(); i++)
 	{
 		auto post = vectpost.at(i);
 		if(post->_indexEnvelope > -1)
 		{
-			maxPostcards++;
 			int index =  post->_indexEnvelope;
 			cout << i + 1 << " " << index + 1 << "\n";
+			outStream << i + 1 << " " << index + 1 << "\n";
 		}
 		delete post;
 	}
-	cout << "Max count: " << maxPostcards << "\n";
+	outStream.close();
 	system("pause");
 }

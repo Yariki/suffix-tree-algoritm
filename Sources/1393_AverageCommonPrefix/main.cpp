@@ -116,13 +116,19 @@ void main()
 	vector<int>* coutForEach = new vector<int>();
 	float acp = calculate_acp(v,coutForEach,_mainPattern.length());
 
+	ofstream out;
+	out.open("out.txt");
 	for(int i = 0; i < v->size();i++)
 	{
 		printf("%s\t%d\n",v->at(i).c_str(), i >= coutForEach->size() ? 0 : coutForEach->at(i));
+		int s = i >= coutForEach->size() ? 0 : coutForEach->at(i);
+		out << v->at(i).c_str() << "\t" << s << "\n";
 	}
 	printf("Average LCP =  %f\n",acp);		
+	out << "Average LCP = " << acp << "\n";
 
 	in.close();
+	out.close();
 	SAFE_DELETE(coutForEach);
 	SAFE_DELETE(v);
 	SAFE_DELETE(input);
