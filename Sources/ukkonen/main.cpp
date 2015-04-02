@@ -354,10 +354,7 @@ ActionType get_action(Position* pos, int j, int i)
 
 void show_info()
 {
-	printf("Rozrahunkovo-graphichna robota na temy 'Algoritmu pobydovu syffiksnuh derev'\n");
-	printf("Algoritm - Ukkonena\n");
-	printf("Stydentku grypu IS-22 - Simon Anastasii\n");
-	printf("\n");
+
 }
 
 
